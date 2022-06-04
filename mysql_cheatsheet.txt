@@ -1,0 +1,40 @@
+SHOW DATABASES;
+CREATE DATABASE DatabaseName;
+CREATE DATABASE DatabaseName CHARACTER SET utf8;
+USE DatabaseName;
+DROP DATABASE DatabaseName;
+ALTER DATABASE DatabaseName CHARACTER SET utf8;
+
+
+SHOW TABLES;
+SHOW FIELDS FROM table / DESCRIBE table;
+SHOW CREATE TABLE table;
+SHOW PROCESSLIST;
+KILL process_number;
+
+
+SELECT user,host FROM mysql.user;
+SHOW GRANTS;
+SHOW GRANTS FOR 'user'@'localhost';
+
+
+CREATE USER 'user'@'localhost';
+GRANT ALL PRIVILEGES ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT, INSERT, DELETE ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
+REVOKE ALL PRIVILEGES ON base.* FROM 'user'@'host'; -- one permission only
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user'@'host'; -- all permissions
+FLUSH PRIVILEGES;
+
+
+SET PASSWORD = PASSWORD('new_pass');
+SET PASSWORD FOR 'user'@'host' = PASSWORD('new_pass');
+SET PASSWORD = OLD_PASSWORD('new_pass');
+DROP USER 'user'@'host';
+
+
+mysqldump -u Username -p dbNameYouWant > databasename_backup.sql
+mysql -u Username -p dbNameYouWant < databasename_backup.sql;
+
+
+mysqlcheck --all-databases;
+mysqlcheck --all-databases --fast;
