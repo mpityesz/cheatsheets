@@ -23,6 +23,7 @@ GRANT ALL PRIVILEGES ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 GRANT SELECT, INSERT, DELETE ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 REVOKE ALL PRIVILEGES ON base.* FROM 'user'@'host'; -- one permission only
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user'@'host'; -- all permissions
+SELECT user,authentication_string,plugin,host FROM mysql.user;
 FLUSH PRIVILEGES;
 
 
