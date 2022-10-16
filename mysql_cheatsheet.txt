@@ -17,6 +17,7 @@ SELECT user,host FROM mysql.user;
 SHOW GRANTS;
 SHOW GRANTS FOR 'user'@'localhost';
 
+SELECT CONCAT('SHOW GRANTS FOR ''',user,'''@''',host,''';') FROM mysql.user;
 
 CREATE USER 'user'@'localhost';
 GRANT ALL PRIVILEGES ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
