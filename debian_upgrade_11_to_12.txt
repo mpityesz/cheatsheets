@@ -27,7 +27,7 @@ tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
 tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
 cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
 dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
-cp /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
+cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
 
 ## APT
 sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list
