@@ -37,6 +37,9 @@ DROP USER 'user'@'host';
 mysqldump -u Username -p dbNameYouWant > databasename_backup.sql
 mysql -u Username -p dbNameYouWant < databasename_backup.sql;
 
+CREATE USER 'sqlbackupuser'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION CLIENT, EVENT, TRIGGER, LOCK TABLES ON *.* TO 'sqlbackupuser'@'localhost';
+FLUSH PRIVILEGES;
 
 mysqlcheck --all-databases;
 mysqlcheck --all-databases --fast;
