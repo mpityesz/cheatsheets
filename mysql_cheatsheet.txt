@@ -45,6 +45,25 @@ GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION SLAVE, SUPER ON *.* TO 'sqlbackupus
 GRANT LOCK TABLES ON *.* TO 'sqlbackupuser'@'%';
 
 
-
 mysqlcheck --all-databases;
 mysqlcheck --all-databases --fast;
+
+
+Bash random password: openssl rand -base64 12
+
+CREATE USER 'sqlbackupuser'@'localhost' IDENTIFIED BY 'shorttagHostnameSQLBackupUserPWip3.ip4';
+GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION CLIENT, EVENT, TRIGGER, LOCK TABLES ON *.* TO 'sqlbackupuser'@'localhost';
+
+CREATE DATABASE roundcubemail;
+CREATE USER 'roundcubemail'@'localhost' IDENTIFIED BY '###RANDOM_PASSWORD###';
+GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcubemail'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+CREATE DATABASE phpmyadmin;
+CREATE USER 'phpmyadmin'@'localhost' IDENTIFIED BY '###RANDOM_PASSWORD###';
+GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'phpmyadmin'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+CREATE USER 'pmaadmin'@'localhost' IDENTIFIED BY 'shorttagHostnameSQLPMAAdminPWip3.ip4';
+GRANT ALL PRIVILEGES ON *.* TO 'pmaadmin'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
