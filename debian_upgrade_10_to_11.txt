@@ -3,8 +3,15 @@ lsb_release -a
 uname -a
 cat /etc/debian_version
 
+## Packages marked "hold" can cause problems
 apt-mark showhold | more
+## OR ##
 dpkg --get-selections | grep 'hold$' | more
+
+## Remove this packages
+# sudo apt-mark unhold package_name
+## OR ##
+# echo 'package_name install' | sudo dpkg --set-selections
 
 ## Installed non-Debian packages
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
@@ -27,13 +34,21 @@ tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
 tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
 cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
 dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
+tar -cvzf ~/var_lib_apt_pkgstates_$(date +"%Y%m%d").tar.gz /var/lib/aptitude/pkgstates/
 cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
 
 ## APT
-sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list
-sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bookworm(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free non-free-firmware/' /etc/apt/sources.list
-sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
-sed -i 's/non-free/non-free non-free-firmware/g' /etc/apt/sources.list.d/*
+sed -i'.bak' 's/buster/bullseye/g' /etc/apt/sources.list
+##sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bullseye(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free/' /etc/apt/sources.list
+sed -i 's/buster/bullseye/g' /etc/apt/sources.list.d/*
+
+## Manual
+deb http://mirrors.linode.com/debian bullseye main
+deb-src http://mirrors.linode.com/debian bullseye main
+deb http://mirrors.linode.com/debian-security bullseye-security/updates main
+deb-src http://mirrors.linode.com/debian-security bullseye-security/updates main
+deb http://mirrors.linode.com/debian bullseye-updates main
+deb-src http://mirrors.linode.com/debian bullseye-updates main
 
 ## Upgrade
 apt update
