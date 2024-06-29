@@ -1,0 +1,26 @@
+systemctl stop docker
+systemctl stop docker.socket
+systemctl status docker
+systemctl status docker.socket
+
+mkdir -p /mnt/storage/docker-lib
+
+mv /var/lib/docker/ /mnt/storage/docker-lib/
+
+chown -R root:root /mnt/storage/docker-lib
+chmod -R 755 /mnt/storage/docker-lib
+
+nano /etc/docker/daemon.json
+{
+  "data-root": "/mnt/storage/docker-lib"
+}
+chown root:root /etc/docker/daemon.json
+chmod 0600 /etc/docker/daemon.json
+
+systemctl start docker
+systemctl status docker
+systemctl status docker.socket
+
+docker info | grep "Docker Root Dir"
+docker run hello-world
+docker ps -a
