@@ -1,62 +1,65 @@
-## Check
+## 1. Check current system details
 lsb_release -a
 uname -a
 cat /etc/debian_version
 
-## Packages marked "hold" can cause problems
+## 2. Check for "hold" packages (these can cause issues)
 apt-mark showhold | more
-## OR ##
 dpkg --get-selections | grep 'hold$' | more
 
-## Remove this packages
-# sudo apt-mark unhold package_name
-## OR ##
-# echo 'package_name install' | sudo dpkg --set-selections
+## 3. Unhold packages if necessary
+sudo apt-mark unhold <package_name>
+# OR
+echo '<package_name> install' | sudo dpkg --set-selections
 
-## Installed non-Debian packages
+## 4. List installed non-Debian packages (forked/third-party)
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
 apt-forktracer | sort
 
-## Update current system + clean
+## 5. Clean up the current system
 apt update
-apt upgrade
+apt upgrade --without-new-pkgs
 apt dist-upgrade
 apt --purge autoremove
 apt autoclean
 find /etc -name '.dpkg-' -o -name '.ucf-' -o -name '*.merge-error'
 
-## Obsolete packages
+## 6. List and remove obsolete packages
 apt list '~o'
 apt purge '~o'
 
-## Backup
+## 7. Backup important files and configurations
 tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
 tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
 cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
 dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
 tar -cvzf ~/var_lib_apt_pkgstates_$(date +"%Y%m%d").tar.gz /var/lib/aptitude/pkgstates/
 cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
+cp /boot/vmlinuz-$(uname -r) ~/vmlinuz-$(uname -r).bkp
 
-## APT
+## 8. Update APT sources to "bullseye"
 sed -i'.bak' 's/buster/bullseye/g' /etc/apt/sources.list
-##sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bullseye(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free/' /etc/apt/sources.list
 sed -i 's/buster/bullseye/g' /etc/apt/sources.list.d/*
 
-## Manual
-deb http://mirrors.linode.com/debian bullseye main
-deb-src http://mirrors.linode.com/debian bullseye main
-deb http://mirrors.linode.com/debian-security bullseye-security/updates main
-deb-src http://mirrors.linode.com/debian-security bullseye-security/updates main
-deb http://mirrors.linode.com/debian bullseye-updates main
-deb-src http://mirrors.linode.com/debian bullseye-updates main
+## 9. Manually verify sources if needed
+cat <<EOF > /etc/apt/sources.list
+deb http://deb.debian.org/debian bullseye main contrib non-free
+deb-src http://deb.debian.org/debian bullseye main contrib non-free
+deb http://deb.debian.org/debian-security bullseye-security/updates main
+deb-src http://deb.debian.org/debian-security bullseye-security/updates main
+deb http://deb.debian.org/debian bullseye-updates main
+deb-src http://deb.debian.org/debian bullseye-updates main
+EOF
 
-## Upgrade
+## 10. Perform the system upgrade
 apt update
 apt upgrade --without-new-pkgs
 apt full-upgrade
+
+## 11. Reboot the system
 reboot
 
-## Check
+## 12. Post-upgrade checks and cleanup
 lsb_release -a
 uname -a
 cat /etc/debian_version
@@ -64,3 +67,9 @@ apt update
 apt full-upgrade
 apt --purge autoremove
 apt autoclean
+
+## 13. Additional: Check installed kernel versions
+dpkg --list | grep linux-image
+# Remove old kernels if needed
+apt --purge remove linux-image-<old_version>
+
