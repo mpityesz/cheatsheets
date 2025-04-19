@@ -1,3 +1,4 @@
+### --- DATABASE MANAGEMENT ---
 SHOW DATABASES;
 CREATE DATABASE DatabaseName;
 CREATE DATABASE DatabaseName CHARACTER SET utf8;
@@ -5,65 +6,64 @@ USE DatabaseName;
 DROP DATABASE DatabaseName;
 ALTER DATABASE DatabaseName CHARACTER SET utf8;
 
-
+### --- TABLE AND STRUCTURE INSPECTION ---
 SHOW TABLES;
-SHOW FIELDS FROM table / DESCRIBE table;
+SHOW COLUMNS FROM table;
+DESCRIBE table;
 SHOW CREATE TABLE table;
-SHOW PROCESSLIST;
-KILL process_number;
 
-
+### --- USER AND PERMISSIONS INSPECTION ---
 SELECT user,host FROM mysql.user;
 SHOW GRANTS;
 SHOW GRANTS FOR 'user'@'localhost';
-
 SELECT CONCAT('SHOW GRANTS FOR ''',user,'''@''',host,''';') FROM mysql.user;
 
-CREATE USER 'user'@'localhost';
-GRANT ALL PRIVILEGES ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
-GRANT SELECT, INSERT, DELETE ON base.* TO 'user'@'localhost' IDENTIFIED BY 'password';
-REVOKE ALL PRIVILEGES ON base.* FROM 'user'@'host'; -- one permission only
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user'@'host'; -- all permissions
-SELECT user,authentication_string,plugin,host FROM mysql.user;
+### --- USER MANAGEMENT AND PRIVILEGES ---
+CREATE USER 'user'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON base.* TO 'user'@'localhost';
+GRANT SELECT, INSERT, DELETE ON base.* TO 'user'@'localhost';
+REVOKE ALL PRIVILEGES ON base.* FROM 'user'@'host';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user'@'host';
+SELECT user,host,plugin FROM mysql.user;
 FLUSH PRIVILEGES;
+DROP USER 'user'@'host';
 
-
+### --- PASSWORD MANAGEMENT ---
+-- MySQL 5.x
 SET PASSWORD = PASSWORD('new_pass');
 SET PASSWORD FOR 'user'@'host' = PASSWORD('new_pass');
 SET PASSWORD = OLD_PASSWORD('new_pass');
-DROP USER 'user'@'host';
+-- MySQL 5.7+ and 8.x
+ALTER USER 'user'@'host' IDENTIFIED BY 'new_pass';
 
-
+### --- BACKUP AND RESTORE ---
 mysqldump -u Username -p dbNameYouWant > databasename_backup.sql
 mysql -u Username -p dbNameYouWant < databasename_backup.sql;
 
+### --- BACKUP USER PRIVILEGES ---
 CREATE USER 'sqlbackupuser'@'localhost' IDENTIFIED BY 'password';
 GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION CLIENT, EVENT, TRIGGER, LOCK TABLES ON *.* TO 'sqlbackupuser'@'localhost';
 FLUSH PRIVILEGES;
-### Old Mysql5
+
+### --- MYSQL 5.x COMPATIBLE GRANTS ---
 GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION SLAVE, SUPER ON *.* TO 'sqlbackupuser'@'%';
 GRANT LOCK TABLES ON *.* TO 'sqlbackupuser'@'%';
 
-
+### --- ENGINE OR PROCESS MANAGEMENT, MAINTENANCE ---
 mysqlcheck --all-databases;
 mysqlcheck --all-databases --fast;
+SHOW PROCESSLIST;
+KILL process_number;
 
+### --- UTILITY COMMANDS ---
+-- Bash random password
+openssl rand -base64 12
 
-Bash random password: openssl rand -base64 12
-
+### --- EXAMPLE: BACKUP USER CREATION ---
 CREATE USER 'sqlbackupuser'@'localhost' IDENTIFIED BY 'shorttagHostnameSQLBackupUserPWip3.ip4';
 GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION CLIENT, EVENT, TRIGGER, LOCK TABLES ON *.* TO 'sqlbackupuser'@'localhost';
 
+### --- EXAMPLE: ROUNDCUBE DATABASE SETUP ---
 CREATE DATABASE roundcubemail;
 CREATE USER 'roundcubemail'@'localhost' IDENTIFIED BY '###RANDOM_PASSWORD###';
-GRANT ALL PRIVILEGES ON roundcubemail.* TO 'roundcubemail'@'localhost' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
-CREATE DATABASE phpmyadmin;
-CREATE USER 'phpmyadmin'@'localhost' IDENTIFIED BY '###RANDOM_PASSWORD###';
-GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'phpmyadmin'@'localhost' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
-CREATE USER 'pmaadmin'@'localhost' IDENTIFIED BY 'shorttagHostnameSQLPMAAdminPWip3.ip4';
-GRANT ALL PRIVILEGES ON *.* TO 'pmaadmin'@'localhost' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
+GRANT ALL
