@@ -1,3 +1,9 @@
+## Screen
+# Use screen -r debian-upgrade to reconnect, if connection broke during the process
+# Detach: Ctrl+a, then d 
+# Close: exit or ctrl+d
+screen -S debian-upgrade
+
 ## Check
 lsb_release -a
 uname -a
