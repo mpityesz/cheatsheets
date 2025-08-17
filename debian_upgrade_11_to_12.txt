@@ -32,7 +32,7 @@ cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
 ## APT
 sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list
 sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bookworm(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free non-free-firmware/' /etc/apt/sources.list
-sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
+sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
 sed -i 's/non-free/non-free non-free-firmware/g' /etc/apt/sources.list.d/*
 
 ## Upgrade
