@@ -19,7 +19,7 @@ apt autoclean
 find /etc -name '.dpkg-' -o -name '.ucf-' -o -name '*.merge-error'
 
 ## Obsolete packages
-apt list '~o'
+apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
 apt purge '~o'
 
 ## Backup
