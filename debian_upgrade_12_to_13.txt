@@ -1,0 +1,93 @@
+###
+# Upgrade from Debian 12 (bookworm) to 13 (trixie)
+###
+
+### Screen
+# Use screen -r debian-upgrade to reconnect, if connection broke during the process
+# Detach: Ctrl+a, then d
+# Close: exit or ctrl+d
+screen -S debian-upgrade
+
+### Check
+# Check for sufficient free disk space and current version
+df -h
+lsb_release -a
+uname -a
+cat /etc/debian_version
+
+# Check for held packages
+apt-mark showhold | more
+dpkg --get-selections | grep 'hold$' | more
+
+### Installed non-Debian packages
+# Identify packages not from Debian repositories
+apt list '?narrow(?installed, ?not(?origin(Debian)))'
+apt-forktracer | sort
+
+### Disable third-party repositories
+# To prevent conflicts during the upgrade, comment out all non-Debian repositories
+# Check all files in /etc/apt/sources.list.d/ and add a '#' at the beginning of each line
+# Example: #deb http://deb.opera.com/opera-beta/ stable non-free
+
+### Update current system + clean
+# Update the current system to the latest bookworm packages and clear package cache
+apt update
+apt upgrade
+apt dist-upgrade
+apt --purge autoremove
+apt clean
+find /etc -name '.dpkg-' -o -name '.ucf-' -o -o -name '*.merge-error'
+
+### Obsolete packages
+# List obsolete packages
+apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
+#apt purge '~o'
+
+### Backup
+# Create a backup of critical system files
+tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
+tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Ym%d").tar.gz /var/lib/dpkg/
+cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Ym%d").bkp
+dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Ym%d").bkp
+# Backup aptitude package states if you use aptitude
+cp /var/lib/aptitude/pkgstates ~/aptitude_pkgstates_$(date +"%Ym%d").bkp
+cp -r /etc/apt /etc/apt.$(date +"%Ym%d").bkp
+
+### APT
+# Change the release name from 'bookworm' to 'trixie'
+# Important: Ensure that all source lists are valid and free of errors before proceeding.
+sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list
+sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list.d/*
+
+### Upgrade
+# Important: Pay close attention to configuration file prompts during the upgrade process.
+# Use 'diff -u' to review changes and manually merge or keep your version.
+apt update
+apt upgrade --without-new-pkgs
+apt full-upgrade
+reboot
+
+### Check again
+# Verify the upgrade was successful
+lsb_release -a
+uname -a
+cat /etc/debian_version
+
+### Final update 
+# Perform a final cleanup and update
+apt update
+apt full-upgrade
+apt --purge autoremove
+apt autoclean
+
+# Convert source files to the new 'deb822' format
+apt modernize-sources
+
+# If you encounter dependency issues, run this command
+# sudo apt --fix-broken install
+
+### Re-enable third-party repositories
+# After the core upgrade is complete, re-enable your third-party repositories by removing the '#' from the commented lines in /etc/apt/sources.list.d/
+# Then, update and upgrade your system again to pull in the latest versions of these packages
+apt update
+apt upgrade
