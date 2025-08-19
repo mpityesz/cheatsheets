@@ -1,10 +1,14 @@
-## Screen
+###
+# Upgrade from Debian 11 (bullseye) to 12 (bookworm)
+###
+
+### Screen
 # Use screen -r debian-upgrade to reconnect, if connection broke during the process
 # Detach: Ctrl+a, then d 
 # Close: exit or ctrl+d
 screen -S debian-upgrade
 
-## Check
+### Check
 lsb_release -a
 uname -a
 cat /etc/debian_version
@@ -12,11 +16,11 @@ cat /etc/debian_version
 apt-mark showhold | more
 dpkg --get-selections | grep 'hold$' | more
 
-## Installed non-Debian packages
+### Installed non-Debian packages
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
 apt-forktracer | sort
 
-## Update current system + clean
+### Update current system + clean
 apt update
 apt upgrade
 apt dist-upgrade
@@ -24,33 +28,35 @@ apt --purge autoremove
 apt autoclean
 find /etc -name '.dpkg-' -o -name '.ucf-' -o -name '*.merge-error'
 
-## Obsolete packages
+### Obsolete packages
 apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
 apt purge '~o'
 
-## Backup
+### Backup
 tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
 tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
 cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
 dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
 cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
 
-## APT
+### APT
 sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list
 sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bookworm(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free non-free-firmware/' /etc/apt/sources.list
 sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
 sed -i 's/non-free/non-free non-free-firmware/g' /etc/apt/sources.list.d/*
 
-## Upgrade
+### Upgrade
 apt update
 apt upgrade --without-new-pkgs
 apt full-upgrade
 reboot
 
-## Check
+### Check again
 lsb_release -a
 uname -a
 cat /etc/debian_version
+
+### Final update 
 apt update
 apt full-upgrade
 apt --purge autoremove
