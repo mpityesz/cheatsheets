@@ -42,12 +42,12 @@ apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
 ### Backup
 # Create a backup of critical system files
 tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
-tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Ym%d").tar.gz /var/lib/dpkg/
-cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Ym%d").bkp
-dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Ym%d").bkp
+tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
+cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
+dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
 # Backup aptitude package states if you use aptitude
-cp /var/lib/aptitude/pkgstates ~/aptitude_pkgstates_$(date +"%Ym%d").bkp
-cp -r /etc/apt /etc/apt.$(date +"%Ym%d").bkp
+cp /var/lib/aptitude/pkgstates ~/aptitude_pkgstates_$(date +"%Y%m%d").bkp
+cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
 
 ### APT
 # Change the release name from 'bullseye' to 'bookworm'
