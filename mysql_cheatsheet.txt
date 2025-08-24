@@ -67,3 +67,18 @@ GRANT SELECT, SHOW VIEW, RELOAD, REPLICATION CLIENT, EVENT, TRIGGER, LOCK TABLES
 CREATE DATABASE roundcubemail;
 CREATE USER 'roundcubemail'@'localhost' IDENTIFIED BY '###RANDOM_PASSWORD###';
 GRANT ALL
+
+### --- Reset root password ---
+systemctl stop mariadb
+mariadbd-safe --skip-grant-tables --skip-networking &
+mariadb -u root
+
+#ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password';
+#UPDATE mysql.user SET Password=PASSWORD('new_password') WHERE User='root' AND Host='localhost';
+#UPDATE mysql.user SET authentication_string=PASSWORD('new_password') WHERE User='root' AND Host='localhost';
+UPDATE mysql.global_priv SET Priv=json_set(Priv, '$.authentication_string', PASSWORD('new_password'), '$.plugin', 'mysql_native_password') WHERE User='root';
+FLUSH PRIVILEGES;
+quit;
+
+mariadbadmin shutdown
+systemctl start mariadb
