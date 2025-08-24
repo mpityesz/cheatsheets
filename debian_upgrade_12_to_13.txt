@@ -36,22 +36,20 @@ apt upgrade
 apt dist-upgrade
 apt --purge autoremove
 apt clean
-find /etc -name '.dpkg-' -o -name '.ucf-' -o -o -name '*.merge-error'
-
-### Obsolete packages
-# List obsolete packages
-apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
-#apt purge '~o'
+find /etc -name '.dpkg-old' -o -name '.ucf-old' -o -name '*.merge-error'
 
 ### Backup
+mkdir -p ~/debian_upgrade_12_13
+# List obsolete packages
+apt list '~o' > ~/debian_upgrade_12_13/obsolete_packages_$(date +"%Y%m%d").bkp
 # Create a backup of critical system files
-tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
-tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
-cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
-dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
+tar -cvzf ~/debian_upgrade_12_13/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
+tar -cvzf ~/debian_upgrade_12_13/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
+cp /var/lib/apt/extended_states ~/debian_upgrade_12_13/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
+dpkg --get-selections "*" > ~/debian_upgrade_12_13/dpkg_get_selections_$(date +"%Y%m%d").bkp
 # Backup aptitude package states if you use aptitude
-cp /var/lib/aptitude/pkgstates ~/aptitude_pkgstates_$(date +"%Y%m%d").bkp
-cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
+cp /var/lib/aptitude/pkgstates ~/debian_upgrade_12_13/aptitude_pkgstates_$(date +"%Y%m%d").bkp
+cp -r /etc/apt ~/debian_upgrade_12_13/etc_apt_$(date +"%Y%m%d").bkp
 
 ### APT
 # Change the release name from 'bookworm' to 'trixie'
@@ -73,7 +71,7 @@ lsb_release -a
 uname -a
 cat /etc/debian_version
 
-### Final update 
+### Final update
 # Perform a final cleanup and update
 apt update
 apt full-upgrade
