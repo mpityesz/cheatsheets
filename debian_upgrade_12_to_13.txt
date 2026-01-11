@@ -89,3 +89,7 @@ apt modernize-sources
 # Then, update and upgrade your system again to pull in the latest versions of these packages
 apt update
 apt upgrade
+
+### Check packages against old vs. new, and reverse
+#comm -23 <(grep -w "install" ~/debian_upgrade_12_13/dpkg_get_selections_*.bkp | awk '{print $1}' | sort) <(dpkg --get-selections | grep -w "install" | awk '{print $1}' | sort)
+#comm -13 <(grep -w "install" ~/debian_upgrade_12_13/dpkg_get_selections_*.bkp | awk '{print $1}' | sort) <(dpkg --get-selections | grep -w "install" | awk '{print $1}' | sort)
