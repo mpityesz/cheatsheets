@@ -63,6 +63,13 @@ sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list.d/*
 apt update
 apt upgrade --without-new-pkgs
 apt full-upgrade
+
+### Sanity check
+dpkg --audit
+dpkg --configure -a
+apt-get -f install
+
+### Reboot
 reboot
 
 ### Check again
