@@ -61,7 +61,8 @@ cp -r /etc/apt ~/debian_upgrade_12_13/etc_apt_$(date +"%Y%m%d").bkp
 # Important: Ensure that all source lists are valid and free of errors before proceeding.
 sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list
 # Apply to .list and .sources files separately to avoid errors on non-text files or directories
-find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 \n  | xargs -0 sed -i'.bak' 's/bookworm/trixie/g'
+find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 \
+  | xargs -0 sed -i'.bak' 's/bookworm/trixie/g'
 
 # Verify the sources look correct before upgrading
 apt update
@@ -80,7 +81,14 @@ dpkg --audit
 dpkg --configure -a
 apt-get -f install
 # Check for partially installed or residual packages
-dpkg -l | awk '$1 ~ /^(iF|iU|iH|rc)$/ {print}' 
+dpkg -l | awk '$1 ~ /^(iF|iU|iH|rc)$/ {print}'
+
+### Pre-reboot check
+# Important: Before rebooting, ensure critical packages for remote access are installed and functional.
+# A lost SSH connection after reboot without these packages means losing remote access entirely.
+apt install --yes openssh-server sudo screen
+systemctl is-active ssh || systemctl start ssh
+systemctl is-enabled ssh || systemctl enable ssh
 
 ### Reboot
 reboot
