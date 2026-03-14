@@ -4,21 +4,28 @@
 
 ### Screen
 # Use screen -r debian-upgrade to reconnect, if connection broke during the process
-# Detach: Ctrl+a, then d 
+# Detach: Ctrl+a, then d
 # Close: exit or ctrl+d
 screen -S debian-upgrade
 
 ### Check
 # Check for sufficient free disk space and current version
 df -h
+df -i
 lsb_release -a
 uname -a
 cat /etc/debian_version
 
+# Check for held packages
 apt-mark showhold | more
 dpkg --get-selections | grep 'hold$' | more
 
+# Check for read-only mounts
+mount | grep ' ro[,)]'
+
 ### Installed non-Debian packages
+# Identify packages not from Debian repositories
+# Note: apt-forktracer must be installed separately: apt install apt-forktracer
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
 apt-forktracer | sort
 
@@ -28,41 +35,66 @@ apt-forktracer | sort
 # Example: #deb http://deb.opera.com/opera-beta/ stable non-free
 
 ### Update current system + clean
+# Update the current system to the latest bullseye packages and clear package cache
 apt update
 apt upgrade
 apt dist-upgrade
 apt --purge autoremove
-apt autoclean
-find /etc -name '.dpkg-' -o -name '.ucf-' -o -name '*.merge-error'
-
-### Obsolete packages
-apt list '~o' > ~/obsolete_packages_$(date +"%Y%m%d").bkp
-# apt purge '~o'
+apt clean
+find /etc -name '.dpkg-old' -o -name '.ucf-old' -o -name '*.merge-error'
 
 ### Backup
+mkdir -p ~/debian_upgrade_11_12
+# List obsolete packages
+apt list '~o' > ~/debian_upgrade_11_12/obsolete_packages_$(date +"%Y%m%d").bkp
 # Create a backup of critical system files
-tar -cvzf ~/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
-tar -cvzf ~/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
-cp /var/lib/apt/extended_states ~/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
-dpkg --get-selections "*" > ~/dpkg_get_selections_$(date +"%Y%m%d").bkp
+tar -cvzf ~/debian_upgrade_11_12/etc_bkp_$(date +"%Y%m%d").tar.gz /etc/
+tar -cvzf ~/debian_upgrade_11_12/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/lib/dpkg/
+cp /var/lib/apt/extended_states ~/debian_upgrade_11_12/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
+dpkg --get-selections "*" > ~/debian_upgrade_11_12/dpkg_get_selections_$(date +"%Y%m%d").bkp
 # Backup aptitude package states if you use aptitude
-cp /var/lib/aptitude/pkgstates ~/aptitude_pkgstates_$(date +"%Y%m%d").bkp
-cp -r /etc/apt /etc/apt.$(date +"%Y%m%d").bkp
+[ -f /var/lib/aptitude/pkgstates ] && cp /var/lib/aptitude/pkgstates ~/debian_upgrade_11_12/aptitude_pkgstates_$(date +"%Y%m%d").bkp
+cp -r /etc/apt ~/debian_upgrade_11_12/etc_apt_$(date +"%Y%m%d").bkp
 
 ### APT
 # Change the release name from 'bullseye' to 'bookworm'
 # Important: Ensure that all source lists are valid and free of errors before proceeding.
 sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list
+# Debian 12 introduces the 'non-free-firmware' component; add it to all bookworm lines
 sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bookworm(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free non-free-firmware/' /etc/apt/sources.list
-sed -i'.bak' 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*
-sed -i 's/non-free/non-free non-free-firmware/g' /etc/apt/sources.list.d/*
+# Apply to .list and .sources files separately to avoid errors on non-text files or directories
+find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 \
+  | xargs -0 sed -i'.bak' 's/bullseye/bookworm/g'
+# Add non-free-firmware component to third-party sources if missing
+sed -i 's/non-free$/non-free non-free-firmware/g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+
+# Verify the sources look correct before upgrading
+apt update
+apt-cache policy | head -n 40
 
 ### Upgrade
 # Important: Pay close attention to configuration file prompts during the upgrade process.
 # Use 'diff -u' to review changes and manually merge or keep your version.
-apt update
+# Dry-run first to preview changes
+apt -s full-upgrade
 apt upgrade --without-new-pkgs
 apt full-upgrade
+
+### Sanity check
+dpkg --audit
+dpkg --configure -a
+apt-get -f install
+# Check for partially installed or residual packages
+dpkg -l | awk '$1 ~ /^(iF|iU|iH|rc)$/ {print}'
+
+### Pre-reboot check
+# Important: Before rebooting, ensure critical packages for remote access are installed and functional.
+# A lost SSH connection after reboot without these packages means losing remote access entirely.
+apt install --yes openssh-server sudo screen
+systemctl is-active ssh || systemctl start ssh
+systemctl is-enabled ssh || systemctl enable ssh
+
+### Reboot
 reboot
 
 ### Check again
@@ -71,7 +103,44 @@ lsb_release -a
 uname -a
 cat /etc/debian_version
 
-### Final update 
+# Check for failed systemd units
+systemctl --failed
+
+# Check running services (adjust to your stack)
+systemctl status ssh
+# systemctl status nginx
+# systemctl status apache2
+# systemctl status postgresql
+# systemctl status mariadb
+# systemctl status docker
+# systemctl status fail2ban
+
+# Check listening ports
+ss -tulpn
+
+# Check for processes still using old library versions (server: restart services instead of full reboot where possible)
+# Install if needed: apt install needrestart
+needrestart
+
+# Check for any post-upgrade boot warnings
+journalctl -b -p warning | tail -n 200
+
+# Check logs for apt/dpkg errors
+grep -iE 'error|failed|dependency' /var/log/apt/term.log | tail -n 50
+
+# Check disk and inode usage after upgrade
+df -h
+df -i
+
+# Verify file integrity of installed packages (install if needed: apt install debsums)
+# Note: /etc differences are expected (intentional config changes); focus on /usr/bin, /usr/lib
+debsums -s
+
+# Update GRUB if kernel was upgraded
+update-grub
+
+### Final update
+# Perform a final cleanup and update
 apt update
 apt full-upgrade
 apt --purge autoremove
@@ -85,3 +154,7 @@ apt autoclean
 # Then, update and upgrade your system again to pull in the latest versions of these packages
 apt update
 apt upgrade
+
+### Check packages against old vs. new, and reverse
+#comm -23 <(grep -w "install" ~/debian_upgrade_11_12/dpkg_get_selections_*.bkp | awk '{print $1}' | sort) <(dpkg --get-selections | grep -w "install" | awk '{print $1}' | sort)
+#comm -13 <(grep -w "install" ~/debian_upgrade_11_12/dpkg_get_selections_*.bkp | awk '{print $1}' | sort) <(dpkg --get-selections | grep -w "install" | awk '{print $1}' | sort)
