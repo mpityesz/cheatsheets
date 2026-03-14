@@ -63,7 +63,7 @@ sed -i".11-12.$(date +"%Y%m%d").bkp" 's/bullseye/bookworm/g' /etc/apt/sources.li
 # Debian 12 introduces the 'non-free-firmware' component; add it to all bookworm lines
 sed -E -i '/^(deb|deb-src)[[:space:]]/ s/(bookworm(-(updates|security|security\/updates))?[[:space:]]).*/\1main contrib non-free non-free-firmware/' /etc/apt/sources.list
 # Apply to .list and .sources files separately to avoid errors on non-text files or directories
-find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 xargs -0 sed -i'.bak' 's/bullseye/bookworm/g'
+find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 xargs -0 sed -i".11-12.$(date +"%Y%m%d").bkp" 's/bullseye/bookworm/g'
 # Add non-free-firmware component to third-party sources if missing
 sed -i 's/non-free$/non-free non-free-firmware/g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
 
