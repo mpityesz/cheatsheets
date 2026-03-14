@@ -11,6 +11,7 @@ screen -S debian-upgrade
 ### Check
 # Check for sufficient free disk space and current version
 df -h
+df -i
 lsb_release -a
 uname -a
 cat /etc/debian_version
@@ -19,8 +20,12 @@ cat /etc/debian_version
 apt-mark showhold | more
 dpkg --get-selections | grep 'hold$' | more
 
+# Check for read-only mounts
+mount | grep ' ro[,)]'
+
 ### Installed non-Debian packages
 # Identify packages not from Debian repositories
+# Note: apt-forktracer must be installed separately: apt install apt-forktracer
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
 apt-forktracer | sort
 
@@ -48,19 +53,25 @@ tar -cvzf ~/debian_upgrade_12_13/var_lib_dpkg_bkp_$(date +"%Y%m%d").tar.gz /var/
 cp /var/lib/apt/extended_states ~/debian_upgrade_12_13/var_lib_apt_extended_states_$(date +"%Y%m%d").bkp
 dpkg --get-selections "*" > ~/debian_upgrade_12_13/dpkg_get_selections_$(date +"%Y%m%d").bkp
 # Backup aptitude package states if you use aptitude
-cp /var/lib/aptitude/pkgstates ~/debian_upgrade_12_13/aptitude_pkgstates_$(date +"%Y%m%d").bkp
+[ -f /var/lib/aptitude/pkgstates ] && cp /var/lib/aptitude/pkgstates ~/debian_upgrade_12_13/aptitude_pkgstates_$(date +"%Y%m%d").bkp
 cp -r /etc/apt ~/debian_upgrade_12_13/etc_apt_$(date +"%Y%m%d").bkp
 
 ### APT
 # Change the release name from 'bookworm' to 'trixie'
 # Important: Ensure that all source lists are valid and free of errors before proceeding.
 sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list
-sed -i'.bak' 's/bookworm/trixie/g' /etc/apt/sources.list.d/*
+# Apply to .list and .sources files separately to avoid errors on non-text files or directories
+find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list' -o -name '*.sources' \) -print0 \n  | xargs -0 sed -i'.bak' 's/bookworm/trixie/g'
+
+# Verify the sources look correct before upgrading
+apt update
+apt-cache policy | head -n 40
 
 ### Upgrade
 # Important: Pay close attention to configuration file prompts during the upgrade process.
 # Use 'diff -u' to review changes and manually merge or keep your version.
-apt update
+# Dry-run first to preview changes
+apt -s full-upgrade
 apt upgrade --without-new-pkgs
 apt full-upgrade
 
@@ -68,6 +79,8 @@ apt full-upgrade
 dpkg --audit
 dpkg --configure -a
 apt-get -f install
+# Check for partially installed or residual packages
+dpkg -l | awk '$1 ~ /^(iF|iU|iH|rc)$/ {print}' 
 
 ### Reboot
 reboot
@@ -77,6 +90,42 @@ reboot
 lsb_release -a
 uname -a
 cat /etc/debian_version
+
+# Check for failed systemd units
+systemctl --failed
+
+# Check running services (adjust to your stack)
+systemctl status ssh
+# systemctl status nginx
+# systemctl status apache2
+# systemctl status postgresql
+# systemctl status mariadb
+# systemctl status docker
+# systemctl status fail2ban
+
+# Check listening ports
+ss -tulpn
+
+# Check for processes still using old library versions (server: restart services instead of full reboot where possible)
+# Install if needed: apt install needrestart
+needrestart
+
+# Check for any post-upgrade boot warnings
+journalctl -b -p warning | tail -n 200
+
+# Check logs for apt/dpkg errors
+grep -iE 'error|failed|dependency' /var/log/apt/term.log | tail -n 50
+
+# Check disk and inode usage after upgrade
+df -h
+df -i
+
+# Verify file integrity of installed packages (install if needed: apt install debsums)
+# Note: /etc differences are expected (intentional config changes); focus on /usr/bin, /usr/lib
+debsums -s
+
+# Update GRUB if kernel was upgraded
+update-grub
 
 ### Final update
 # Perform a final cleanup and update
