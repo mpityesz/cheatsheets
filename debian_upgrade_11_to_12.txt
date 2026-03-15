@@ -31,7 +31,6 @@ mount | grep ' ro[,)]'
 
 ### Installed non-Debian packages
 # Identify packages not from Debian repositories
-# Note: apt-forktracer must be installed separately: apt install apt-forktracer
 apt list '?narrow(?installed, ?not(?origin(Debian)))'
 apt-forktracer | sort
 
@@ -134,7 +133,6 @@ systemctl status ssh
 ss -tulpn
 
 # Check for processes still using old library versions (server: restart services instead of full reboot where possible)
-# Install if needed: apt install needrestart
 needrestart
 
 # Check for any post-upgrade boot warnings
