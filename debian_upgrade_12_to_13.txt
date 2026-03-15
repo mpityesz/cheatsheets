@@ -36,8 +36,10 @@ apt-forktracer | sort
 
 ### Disable third-party repositories
 # To prevent conflicts during the upgrade, comment out all non-Debian repositories
-# Check all files in /etc/apt/sources.list.d/ and add a '#' at the beginning of each line
-# Example: #deb http://deb.opera.com/opera-beta/ stable non-free
+# For sources.list.d: use the command below to prefix active lines with #12-13#
+# so that originally-commented lines are not affected and can be restored cleanly later
+# Note: handle /etc/apt/sources.list manually if it contains third-party entries
+sed -i 's/^[^#].*$/#12-13#&/' /etc/apt/sources.list.d/*.list
 
 ### Update current system + clean
 # Update the current system to the latest bookworm packages and clear package cache
@@ -164,7 +166,8 @@ apt modernize-sources
 # sudo apt --fix-broken install
 
 ### Re-enable third-party repositories
-# After the core upgrade is complete, re-enable your third-party repositories by removing the '#' from the commented lines in /etc/apt/sources.list.d/
+# Remove the temporary upgrade prefix added before the upgrade
+sed -i 's/^#12-13#//' /etc/apt/sources.list.d/*.list
 # Then, update and upgrade your system again to pull in the latest versions of these packages
 apt update
 apt upgrade
