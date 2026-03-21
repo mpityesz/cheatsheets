@@ -78,16 +78,15 @@ cp -r /etc/apt ~/debian_upgrade_11_12/etc_apt_$(date +"%Y%m%d").bkp
 # Change the release name from 'bullseye' to 'bookworm'
 # Important: Ensure that all source lists are valid and free of errors before proceeding.
 sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
-# Debian 12 introduces the 'non-free-firmware' component; add it if your system requires non-free firmware
-# Review /etc/apt/sources.list manually after this change, especially if it contains custom components
-sed -E -i "/^(deb|deb-src)[[:space:]].*bookworm/ {/non-free-firmware/! s#(bookworm([[:space:]]+[^#[:space:]]+)*)#\1 non-free-firmware#}" /etc/apt/sources.list
+# Debian 12 introduces the 'non-free-firmware' component; add it where 'non-free' is already enabled
+sed -E -i '/non-free/ {/non-free-firmware/! s/(^|[[:space:]])non-free([[:space:]]|$)/\1non-free non-free-firmware\2/;}' /etc/apt/sources.list
 # Apply the release name change to .list and .sources files separately to avoid errors on non-text files or directories
 find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.list' -exec sed -i 's/bullseye/bookworm/g' {} +
-find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.sources' -exec sed -i 's/bullseye/bookworm/g' {} +
+find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.list' -exec sed -E -i '/non-free/ {/non-free-firmware/! s/(^|[[:space:]])non-free([[:space:]]|$)/\1non-free non-free-firmware\2/;}' {} +
 # Add non-free-firmware only to Debian .list entries that already use non-free
-find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.list' -exec sed -i '/debian\.org/ {/non-free-firmware/! s/ non-free$/ non-free non-free-firmware/;}' {} +
+find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.sources' -exec sed -i 's/bullseye/bookworm/g' {} +
 # Add non-free-firmware only to Debian .sources entries that already use non-free
-find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.sources' -exec sed -i '/^URIs:.*debian\.org/ { :a; n; /^Components:/ { /non-free/ { /non-free-firmware/! s/$/ non-free-firmware/; } }; ba }' {} +
+find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.sources' -exec sed -i '/^Components: / {/non-free/ {/non-free-firmware/! s/$/ non-free-firmware/;}}' {} +
 
 # Verify the sources look correct before upgrading
 apt update
