@@ -96,8 +96,9 @@ apt-cache policy | head -n 40
 # Important: Pay close attention to configuration file prompts during the upgrade process.
 # Use 'diff -u' to review changes and manually merge or keep your version.
 # Dry-run first to preview changes and save the list of packages that will be removed
-# Note: third-party packages with distro-specific version suffixes (e.g. ~bullseye) may be removed
-# and will need to be manually reinstalled after the upgrade and re-enabling third-party repos
+# Note: packages whose version contains a distro-specific suffix (e.g. ~bullseye) will be removed
+# by apt during the upgrade; check the output carefully and reinstall them manually after
+# re-enabling third-party repos (packages without such suffixes, e.g. Docker, are generally safe)
 apt -s full-upgrade | tee ~/debian_upgrade_11_12/apt_simulate_full_upgrade_$(date +"%Y%m%d").bkp
 apt upgrade --without-new-pkgs
 apt full-upgrade
