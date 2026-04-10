@@ -88,6 +88,11 @@ find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.list' -exec sed -E -i 
 # Add non-free-firmware only to Debian .sources entries that already use non-free
 find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.sources' -exec sed -i '/^Components: / {/non-free/ {/non-free-firmware/! s/$/ non-free-firmware/;}}' {} +
 
+# Fix archive.debian.org to deb.debian.org for active releases (bookworm is not archived yet)
+# This prevents "404 Not Found" errors when apt tries to fetch from the archive for current releases
+sed -i 's|archive\.debian\.org/debian|deb.debian.org/debian|g' /etc/apt/sources.list
+find /etc/apt/sources.list.d -maxdepth 1 -type f -name '*.list' -exec sed -i 's|archive\.debian\.org/debian|deb.debian.org/debian|g' {} +
+
 # Verify the sources look correct before upgrading
 apt update
 apt-cache policy | head -n 40
